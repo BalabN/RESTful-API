@@ -2,6 +2,7 @@ package org.knedl.example.messenger.resources;
 
 import java.util.List;
 
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -10,7 +11,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.knedl.example.messenger.model.Message;
@@ -24,15 +24,17 @@ public class MessageResource {
 	MessageService messageService = new MessageService();
 	
 	// Get all messages
-	// QuerryParam takes if it is in url ?year exp.
+	// QuerryParam takes if it is in url (?year exp.)
+	// @QueryParam("year") int year,
+	// @QueryParam("start") int start,
+	// @QueryParam("size") int size
+	// Changed here with bean parameter
 	@GET
-	public List<Message> getMessages(@QueryParam("year") int year,
-									 @QueryParam("start") int start,
-									 @QueryParam("size") int size) {
-		if (year > 0 ) {
-			return messageService.getAllMessagesForYear(year);
-		} if (start > 0 && size > 0) {
-			return messageService.getAllMessagesPaginated(start, size);
+	public List<Message> getMessages(@BeanParam MessageFilterBean filterBean) {
+		if (filterBean.getYear() > 0 ) {
+			return messageService.getAllMessagesForYear(filterBean.getYear());
+		} if (filterBean.getStart() > 0 && filterBean.getSize() > 0) {
+			return messageService.getAllMessagesPaginated(filterBean.getStart(), filterBean.getSize());
 		}
 		return messageService.getAllMessage();
 	}
