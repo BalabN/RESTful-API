@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Iterator;
 
 import org.knedl.example.messenger.datebase.DatabaseClass;
+import org.knedl.example.messenger.exception.DataNotFoundException;
 import org.knedl.example.messenger.model.Message;
 
 public class MessageService {
@@ -26,7 +27,11 @@ public class MessageService {
 	}
 	
 	public Message getMessage(long id) {
-		return messages.get(id);
+		Message message = messages.get(id);
+		if (message == null) {
+			throw new DataNotFoundException("Message with id " + id + " not found");
+		}
+		return message;
 	}
 	
 	public Message addMessage(Message message) {
