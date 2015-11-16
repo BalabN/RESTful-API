@@ -9,7 +9,9 @@ import org.knedl.example.messenger.model.ErrorMessage;
 
 
 // There is a hierarchy on calling exceptions - if there is something to catch it uses that if not it goes here
-@Provider
+// THrowable catches everything and Jax-rs knows to identify exceptions so we do not need this
+// Removed annotation @Provider to disable this call
+
 public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
 
 	@Override

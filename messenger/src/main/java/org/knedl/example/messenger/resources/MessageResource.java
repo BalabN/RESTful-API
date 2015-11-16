@@ -24,7 +24,7 @@ import org.knedl.example.messenger.service.MessageService;
 
 @Path("/messages")
 @Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(value = {MediaType.APPLICATION_JSON})
 public class MessageResource {
 
 	MessageService messageService = new MessageService();
@@ -36,7 +36,19 @@ public class MessageResource {
 	// @QueryParam("size") int size
 	// Changed here with bean parameter
 	@GET
-	public List<Message> getMessages(@BeanParam MessageFilterBean filterBean) {
+	@Produces(value = {MediaType.TEXT_XML})
+	public List<Message> getXmlMessages(@BeanParam MessageFilterBean filterBean) {
+		if (filterBean.getYear() > 0 ) {
+			return messageService.getAllMessagesForYear(filterBean.getYear());
+		} if (filterBean.getStart() > 0 && filterBean.getSize() > 0) {
+			return messageService.getAllMessagesPaginated(filterBean.getStart(), filterBean.getSize());
+		}
+		return messageService.getAllMessage();
+	}
+	
+	@GET
+	@Produces(value = {MediaType.APPLICATION_JSON})
+	public List<Message> getJsonMessages(@BeanParam MessageFilterBean filterBean) {
 		if (filterBean.getYear() > 0 ) {
 			return messageService.getAllMessagesForYear(filterBean.getYear());
 		} if (filterBean.getStart() > 0 && filterBean.getSize() > 0) {
@@ -86,8 +98,37 @@ public class MessageResource {
 	// You can change method param type
 	@GET
 	@Path("/{messageId}")
-	public Message getMessage(@PathParam("messageId") long messageId) {
-		return messageService.getMessage(messageId);
+	public Message getMessage(@PathParam("messageId") long messageId, @Context UriInfo uriInfo) {
+		Message message = messageService.getMessage(messageId);
+
+		// Adding links to self for response
+		String uri = getUriForSelf(uriInfo, message);
+		
+		message.addLink(uri, "self");
+		message.addLink(getUriForProfile(uriInfo, message), "profile");
+		message.addLink(getUriForComments(uriInfo, message), "comments");
+		return message;
+	}
+
+	// Comment resource is connected to messages and you have path there only /
+	// So the path method can take two parameters - one is class one is classes method name as String
+	private String getUriForComments(UriInfo uriInfo, Message message) {
+		return uriInfo.getBaseUriBuilder().path(MessageResource.class)
+										  .path(MessageResource.class, "getCommentResource")
+										  .path(CommentResource.class)
+										  .resolveTemplate("messageId", message.getId())
+										  .build().toString();
+	
+	}
+
+	private String getUriForProfile(UriInfo uriInfo, Message message) {
+		String uri = uriInfo.getBaseUriBuilder().path(ProfileResource.class).path(message.getAuthor()).build().toString();
+		return uri;
+	}
+
+	private String getUriForSelf(UriInfo uriInfo, Message message) {
+		String uri = uriInfo.getBaseUriBuilder().path(MessageResource.class).path(Long.toString(message.getId())).build().toString();
+		return uri;
 	}
 	
 	// Delete a message
